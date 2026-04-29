@@ -11,7 +11,7 @@ let targetY = 0;
 let frameId = 0;
 
 function isLightMode() {
-  return window.matchMedia("(prefers-color-scheme: light)").matches;
+  return false;
 }
 
 function resize() {
