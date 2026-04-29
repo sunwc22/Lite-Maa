@@ -43,6 +43,7 @@ foreach ($dir in @($packageRoot, $runtimeRoot, $dataRoot, $configRoot, $screensh
 $projectFiles = @(
     "Arknights-MuMu-Launcher.ps1",
     "Launcher.UI.ps1",
+    "Launcher.UI.modern.v2.ps1",
     "Arknights-MuMu-Launcher.vbs",
     "vision_detect.py",
     "duel_dataset.py",

@@ -1037,6 +1037,19 @@ function Return-DuelHomeAfterResult {
             continue
         }
 
+        if ($state -eq "start" -or $state -eq "unknown") {
+            $finalGift = Invoke-DuelFinalGiftDetect -Path $path
+            if (Test-DuelFinalGiftEvidence -FinalGift $finalGift) {
+                $size = Get-DeviceSize
+                $x = [int]($size.Width * 0.875)
+                $y = [int]($size.Height * 0.92)
+                Add-Log ("Final settlement return confirmed by OCR despite state {0}; tapping return home at {1},{2}." -f $state, $x, $y)
+                Tap-ScreenBurst -X $x -Y $y -Reason "duel return home OCR fallback"
+                Wait-TaskInterval -Seconds 2.0
+                continue
+            }
+        }
+
         Add-Log ("Waiting for result return page, current state: {0}." -f $state)
         Wait-TaskInterval -Seconds 2
     }
@@ -1508,6 +1521,18 @@ function Auto-JoinDuelEvent {
             $joinEventTapped = $false
             $casualTapped = $false
             $startGameTapped = $false
+        } elseif ($state -eq "start") {
+            $finalGift = Invoke-DuelFinalGiftDetect -Path $path
+            if (Test-DuelFinalGiftEvidence -FinalGift $finalGift) {
+                Add-Log "Final settlement page misdetected as START; returning home."
+                Return-DuelHomeAfterResult
+                $duelChannelTapped = $false
+                $joinEventTapped = $false
+                $casualTapped = $false
+                $startGameTapped = $false
+            } else {
+                Add-Log "Duel target not recognized; waiting."
+            }
         } elseif ($state -eq "duel_casual_selected" -and $vision.PSObject.Properties.Name -contains "x" -and $vision.PSObject.Properties.Name -contains "y") {
             if ($startGameTapped) {
                 Add-Log "Start Game already clicked; waiting for duel game screen."

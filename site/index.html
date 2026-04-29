@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="MaaLite 是一个轻量化斗蛐蛐自动工具。">
+  <title>MaaLite - Duel Channel Data Launcher</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <canvas id="wave-canvas" aria-hidden="true"></canvas>
+  <div class="page-shell">
+    <header class="site-header" aria-label="Primary navigation">
+      <a class="brand" href="#top" aria-label="MaaLite home">
+        <span class="brand-mark">M</span>
+        <span>MaaLite</span>
+      </a>
+      <nav class="nav-links" aria-label="Page sections">
+        <a href="#features">功能</a>
+        <a href="#workflow">流程</a>
+        <a href="#download">下载</a>
+        <a href="https://github.com/sunwc22/Lite-Maa/releases/tag/v0.0.1-beta" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Acquire</p>
+          <h1 id="hero-title">MaaLite</h1>
+          <p class="hero-subtitle">轻量化斗蛐蛐自动工具</p>
+          <div class="hero-tags" aria-label="Supported environment">
+            <span>Windows</span>
+            <span>MuMu 12</span>
+            <span>PaddleOCR</span>
+          </div>
+          <div class="hero-actions" id="download">
+            <a class="button primary" href="https://github.com/sunwc22/Lite-Maa/releases/tag/v0.0.1-beta" target="_blank" rel="noreferrer">
+              下载 beta
+            </a>
+            <a class="button ghost" href="#features">查看功能</a>
+          </div>
+          <p class="build-note">v0.0.1-beta</p>
+        </div>
+      </section>
+
+      <section class="section" id="features" aria-labelledby="features-title">
+        <div class="section-heading">
+          <p class="eyebrow">Powerful Features</p>
+          <h2 id="features-title">从启动到数据，一条线跑完</h2>
+          <p>页面判断保持谨慎，识别结果保留证据，最终记录写入当前默认数据集位置。</p>
+        </div>
+        <div class="feature-grid">
+          <article>
+            <span class="feature-icon">01</span>
+            <h3>启动唤醒</h3>
+            <p>打开 MuMu、启动明日方舟，并穿过 START、开始唤醒和公告弹窗进入主页。</p>
+          </article>
+          <article>
+            <span class="feature-icon">02</span>
+            <h3>争锋频道采集</h3>
+            <p>自动进入争锋频道、自娱自乐赛事，并按设置循环记录多轮对阵。</p>
+          </article>
+          <article>
+            <span class="feature-icon">03</span>
+            <h3>OCR 对阵识别</h3>
+            <p>提取双方敌人名称、数量、支持按钮位置和最终礼物点数。</p>
+          </article>
+          <article>
+            <span class="feature-icon">04</span>
+            <h3>胜负判断</h3>
+            <p>根据下注前后礼物数量变化推断获胜方，无法确认时保留 unknown。</p>
+          </article>
+          <article>
+            <span class="feature-icon">05</span>
+            <h3>JSONL 数据集</h3>
+            <p>追加写入 <code>data/duel_match_dataset.jsonl</code>，保持每轮记录简洁可处理。</p>
+          </article>
+          <article>
+            <span class="feature-icon">06</span>
+            <h3>便携打包</h3>
+            <p>支持轻量包和携带 PaddleOCR runtime 的便携包，方便迁移到目标电脑。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section workflow-section" id="workflow" aria-labelledby="workflow-title">
+        <div class="section-heading">
+          <p class="eyebrow">Automation Flow</p>
+          <h2 id="workflow-title">每一轮都留下可追踪记录</h2>
+        </div>
+        <ol class="workflow">
+          <li><span>Start Wake</span><p>进入明日方舟主页。</p></li>
+          <li><span>Join Duel Event</span><p>打开争锋频道并选择自娱自乐。</p></li>
+          <li><span>OCR Extract</span><p>读取敌人、数量、礼物和支持按钮。</p></li>
+          <li><span>Support</span><p>随机选择左侧或右侧队伍。</p></li>
+          <li><span>Judge</span><p>比较礼物变化，判定胜方。</p></li>
+          <li><span>Append JSONL</span><p>写入结构化对阵结果。</p></li>
+        </ol>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>MaaLite is a local automation helper for personal Duel Channel data collection.</p>
+      <div>
+        <a href="https://github.com/sunwc22/Lite-Maa/releases/tag/v0.0.1-beta" target="_blank" rel="noreferrer">GitHub Release</a>
+        <span>Local preview: <code>python -m http.server 4173 --bind 127.0.0.1</code></span>
+      </div>
+    </footer>
+  </div>
+  <script src="./main.js"></script>
+</body>
+</html>
