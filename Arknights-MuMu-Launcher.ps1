@@ -830,15 +830,18 @@ function Add-DuelMatchRecord {
         }
     }
 
+    $ocrQuality = Get-DuelMatchRecognitionQuality -MatchResult $MatchResult
+    $enemyOcrStatus = if ($ocrQuality.IsComplete) { "complete" } else { "incomplete" }
     $compactRecord = [pscustomobject]@{
         time_local = $timeLocal
         winner_side = $WinnerSide
+        enemy_ocr_status = $enemyOcrStatus
         left = $leftEnemies
         right = $rightEnemies
     }
 
     ($compactRecord | ConvertTo-Json -Depth 8 -Compress) | Add-Content -LiteralPath $duelDatasetPath -Encoding UTF8
-    Add-Log ("Duel match appended with winner_side: {0}." -f $WinnerSide)
+    Add-Log ("Duel match appended with winner_side: {0}, enemy_ocr_status: {1}." -f $WinnerSide, $enemyOcrStatus)
 }
 
 function Get-DuelMatchRecognitionQuality {
@@ -926,13 +929,15 @@ function Wait-DuelResult {
         [Nullable[int]]$InitialGifts
     )
 
-    Add-Log "Waiting for duel result by watching remaining gifts; battle may take 30-60 seconds."
+    Add-Log "Waiting for duel result by watching remaining gifts; battle may take 10-60 seconds."
     $finalGifts = $null
     $sawFinalSettlement = $false
     $deadline = (Get-Date).AddMinutes(6)
+    $pollDelaySeconds = 10
     while ((Get-Date) -lt $deadline) {
         Test-StopRequested
-        Wait-TaskInterval -Seconds 5
+        Wait-TaskInterval -Seconds $pollDelaySeconds
+        $pollDelaySeconds = 5
         $path = Capture-Screen
 
         $vision = Invoke-VisionDetect -Path $path
@@ -1104,50 +1109,28 @@ function Collect-DuelMatchInfo {
 
     $oldScreenFile = $screenFile
     $captureIndex = 0
-    $bestResult = $null
-    $bestQuality = $null
-    $maxAttemptsPerPoint = 3
     foreach ($point in $detailPoints) {
         Test-StopRequested
         Add-Log ("Opening {0}." -f $point.Name)
         Tap-Screen -X $point.X -Y $point.Y -Reason "duel enemy detail"
         Wait-TaskInterval -Seconds 0.50
 
-        for ($attempt = 1; $attempt -le $maxAttemptsPerPoint; $attempt++) {
-            Test-StopRequested
-            if ($attempt -gt 1) {
-                Add-Log ("Retrying duel matchup OCR for {0}, attempt {1}/{2}." -f $point.Name, $attempt, $maxAttemptsPerPoint)
-                Wait-TaskInterval -Seconds 0.60
+        $captureIndex++
+        $datasetScreen = Join-Path $screenshotDir ("arknights-duel-dataset-{0}-{1}.png" -f (Get-Date -Format "yyyyMMdd-HHmmss"), $captureIndex)
+        try {
+            $script:screenFile = $datasetScreen
+            $path = Capture-Screen
+            $savedResult = Save-DuelMatchDataset -Path $path
+            if ($null -ne $savedResult) {
+                $quality = Get-DuelMatchRecognitionQuality -MatchResult $savedResult
+                $status = if ($quality.IsComplete) { "complete" } else { "incomplete" }
+                Add-Log ("Duel OCR quality: {0}, enemies {1}, missing count {2}, missing name {3}, sides L{4}/R{5}." -f $status, $quality.EnemyCount, $quality.MissingCount, $quality.MissingName, $quality.LeftCount, $quality.RightCount)
+                Add-Log "Duel matchup captured; stopping further recognition for this task."
+                return (Random-SupportDuelSide -MatchResult $savedResult)
             }
-
-            $captureIndex++
-            $datasetScreen = Join-Path $screenshotDir ("arknights-duel-dataset-{0}-{1}.png" -f (Get-Date -Format "yyyyMMdd-HHmmss"), $captureIndex)
-            try {
-                $script:screenFile = $datasetScreen
-                $path = Capture-Screen
-                $savedResult = Save-DuelMatchDataset -Path $path
-                if ($null -ne $savedResult) {
-                    $quality = Get-DuelMatchRecognitionQuality -MatchResult $savedResult
-                    Add-Log ("Duel OCR quality: enemies {0}, missing count {1}, missing name {2}, sides L{3}/R{4}." -f $quality.EnemyCount, $quality.MissingCount, $quality.MissingName, $quality.LeftCount, $quality.RightCount)
-                    if ($null -eq $bestQuality -or $quality.Score -gt $bestQuality.Score) {
-                        $bestResult = $savedResult
-                        $bestQuality = $quality
-                    }
-                    if ($quality.IsComplete) {
-                        Add-Log "Duel matchup captured with complete enemy counts."
-                        return (Random-SupportDuelSide -MatchResult $savedResult)
-                    }
-                    Add-Log "Duel matchup OCR incomplete; trying another capture before accepting it."
-                }
-            } finally {
-                $script:screenFile = $oldScreenFile
-            }
+        } finally {
+            $script:screenFile = $oldScreenFile
         }
-    }
-
-    if ($bestResult -and $bestQuality -and $bestQuality.IsUsable) {
-        Add-Log ("Using best incomplete duel matchup after retries: enemies {0}, missing count {1}, missing name {2}, sides L{3}/R{4}." -f $bestQuality.EnemyCount, $bestQuality.MissingCount, $bestQuality.MissingName, $bestQuality.LeftCount, $bestQuality.RightCount)
-        return (Random-SupportDuelSide -MatchResult $bestResult)
     }
 
     Add-Log "No valid duel matchup detail was captured."

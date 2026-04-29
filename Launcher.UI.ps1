@@ -90,7 +90,7 @@ $rootLayout.Dock = [System.Windows.Forms.DockStyle]::Fill
 $rootLayout.RowCount = 2
 $rootLayout.ColumnCount = 1
 $rootLayout.BackColor = $appBg
-$rootLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 170))) | Out-Null
+$rootLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 118))) | Out-Null
 $rootLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100))) | Out-Null
 $form.Controls.Add($rootLayout)
 
@@ -107,9 +107,9 @@ $heroPanel.Add_Paint({
 
     $penA = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(90, 255, 180, 245), 2)
     $penB = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(46, 255, 255, 255), 1)
-    $e.Graphics.DrawBezier($penA, -80, 145, 150, -45, 340, -20, 560, 120)
-    $e.Graphics.DrawBezier($penA, -30, 42, 170, 78, 350, 24, 520, 60)
-    $e.Graphics.DrawBezier($penB, 630, 190, 720, 105, 900, 155, 1120, 44)
+    $e.Graphics.DrawBezier($penA, -90, 102, 150, -34, 340, -18, 560, 86)
+    $e.Graphics.DrawBezier($penA, -30, 28, 170, 54, 350, 18, 520, 44)
+    $e.Graphics.DrawBezier($penB, 630, 128, 720, 72, 900, 102, 1120, 30)
     $penA.Dispose()
     $penB.Dispose()
 })
@@ -127,11 +127,11 @@ $brandLabel.Size = New-Object System.Drawing.Size -ArgumentList 260, 38
 
 $heroTitle = New-Object System.Windows.Forms.Label
 $heroTitle.Text = "Arknights MuMu Automation"
-$heroTitle.Font = New-Object System.Drawing.Font -ArgumentList "Microsoft YaHei UI", 24, ([System.Drawing.FontStyle]::Bold)
+$heroTitle.Font = New-Object System.Drawing.Font -ArgumentList "Microsoft YaHei UI", 22, ([System.Drawing.FontStyle]::Bold)
 $heroTitle.ForeColor = [System.Drawing.Color]::White
 $heroTitle.BackColor = [System.Drawing.Color]::Transparent
-$heroTitle.Location = New-Object System.Drawing.Point -ArgumentList 44, 54
-$heroTitle.Size = New-Object System.Drawing.Size -ArgumentList 620, 46
+$heroTitle.Location = New-Object System.Drawing.Point -ArgumentList 44, 36
+$heroTitle.Size = New-Object System.Drawing.Size -ArgumentList 620, 42
 $heroPanel.Controls.Add($heroTitle)
 
 $heroSub = New-Object System.Windows.Forms.Label
@@ -141,7 +141,8 @@ $heroSub.ForeColor = [System.Drawing.Color]::FromArgb(238, 231, 246)
 $heroSub.BackColor = [System.Drawing.Color]::Transparent
 $heroSub.Location = New-Object System.Drawing.Point -ArgumentList 48, 104
 $heroSub.Size = New-Object System.Drawing.Size -ArgumentList 620, 24
-$heroPanel.Controls.Add($heroSub)
+# Removed hero subtitle per request.
+# $heroPanel.Controls.Add($heroSub)
 
 $statusPill = New-Object System.Windows.Forms.Label
 $statusPill.Text = ""
@@ -207,7 +208,7 @@ $contentLayout = New-Object System.Windows.Forms.TableLayoutPanel
 $contentLayout.Dock = [System.Windows.Forms.DockStyle]::Fill
 $contentLayout.ColumnCount = 3
 $contentLayout.RowCount = 1
-$contentLayout.Padding = New-Object System.Windows.Forms.Padding -ArgumentList 34, 24, 30, 28
+$contentLayout.Padding = New-Object System.Windows.Forms.Padding -ArgumentList 34, 20, 30, 26
 $contentLayout.BackColor = $appBg
 $contentLayout.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Absolute, 300))) | Out-Null
 $contentLayout.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100))) | Out-Null
@@ -310,25 +311,29 @@ $settingsTitle.Text = "Start Wake"
 $settingsTitle.Font = New-Object System.Drawing.Font -ArgumentList "Microsoft YaHei UI", 16, ([System.Drawing.FontStyle]::Bold)
 $settingsTitle.Location = New-Object System.Drawing.Point -ArgumentList 24, 18
 $settingsTitle.Size = New-Object System.Drawing.Size -ArgumentList 340, 36
-$settingsPanel.Controls.Add($settingsTitle)
+$settingsTitle.Visible = $false
+# Removed middle-column task title per request.
+# $settingsPanel.Controls.Add($settingsTitle)
 
 $settingsNote = New-Object System.Windows.Forms.Label
 $settingsNote.Text = "Launch MuMu, continue login, then open Duel Channel and enter Join Event when enabled."
 $settingsNote.ForeColor = $mutedText
 $settingsNote.Location = New-Object System.Drawing.Point -ArgumentList 26, 58
 $settingsNote.Size = New-Object System.Drawing.Size -ArgumentList 380, 48
-$settingsPanel.Controls.Add($settingsNote)
+$settingsNote.Visible = $false
+# Removed middle-column explanatory note per request.
+# $settingsPanel.Controls.Add($settingsNote)
 
 $autoLoginCheckBox = New-Object System.Windows.Forms.CheckBox
 $autoLoginCheckBox.Text = "启动后自动继续登录"
 $autoLoginCheckBox.Checked = $true
-$autoLoginCheckBox.Location = New-Object System.Drawing.Point -ArgumentList 24, 118
+$autoLoginCheckBox.Location = New-Object System.Drawing.Point -ArgumentList 24, 34
 $autoLoginCheckBox.Size = New-Object System.Drawing.Size -ArgumentList 260, 26
 $settingsPanel.Controls.Add($autoLoginCheckBox)
 
 $duelLoopLabel = New-Object System.Windows.Forms.Label
 $duelLoopLabel.Text = "循环次数"
-$duelLoopLabel.Location = New-Object System.Drawing.Point -ArgumentList 24, 118
+$duelLoopLabel.Location = New-Object System.Drawing.Point -ArgumentList 24, 34
 $duelLoopLabel.Size = New-Object System.Drawing.Size -ArgumentList 110, 24
 $duelLoopLabel.Visible = $false
 $settingsPanel.Controls.Add($duelLoopLabel)
@@ -337,7 +342,7 @@ $duelLoopUpDown = New-Object System.Windows.Forms.NumericUpDown
 $duelLoopUpDown.Minimum = 0
 $duelLoopUpDown.Maximum = 999
 $duelLoopUpDown.Value = 0
-$duelLoopUpDown.Location = New-Object System.Drawing.Point -ArgumentList 136, 116
+$duelLoopUpDown.Location = New-Object System.Drawing.Point -ArgumentList 136, 32
 $duelLoopUpDown.Size = New-Object System.Drawing.Size -ArgumentList 90, 24
 $duelLoopUpDown.Visible = $false
 $settingsPanel.Controls.Add($duelLoopUpDown)
@@ -345,28 +350,29 @@ $settingsPanel.Controls.Add($duelLoopUpDown)
 $duelLoopHint = New-Object System.Windows.Forms.Label
 $duelLoopHint.Text = "0 means unlimited. Each loop records one matchup and winner, returns to Duel Channel, then starts the next game."
 $duelLoopHint.ForeColor = $mutedText
-$duelLoopHint.Location = New-Object System.Drawing.Point -ArgumentList 24, 154
+$duelLoopHint.Location = New-Object System.Drawing.Point -ArgumentList 24, 68
 $duelLoopHint.Size = New-Object System.Drawing.Size -ArgumentList 360, 60
 $duelLoopHint.Visible = $false
-$settingsPanel.Controls.Add($duelLoopHint)
+# Removed middle-column explanatory hint per request.
+# $settingsPanel.Controls.Add($duelLoopHint)
 
 $pathLabel = New-Object System.Windows.Forms.Label
 $pathLabel.Text = "MuMu 根目录"
-$pathLabel.Location = New-Object System.Drawing.Point -ArgumentList 24, 178
+$pathLabel.Location = New-Object System.Drawing.Point -ArgumentList 24, 82
 $pathLabel.Size = New-Object System.Drawing.Size -ArgumentList 110, 24
 $settingsPanel.Controls.Add($pathLabel)
 
 $pathText = New-Object System.Windows.Forms.TextBox
 $pathText.Text = $MuMuRoot
 $pathText.ReadOnly = $true
-$pathText.Location = New-Object System.Drawing.Point -ArgumentList 136, 176
+$pathText.Location = New-Object System.Drawing.Point -ArgumentList 136, 80
 $pathText.Size = New-Object System.Drawing.Size -ArgumentList 230, 24
 $pathText.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
 $settingsPanel.Controls.Add($pathText)
 
 $vmLabel = New-Object System.Windows.Forms.Label
 $vmLabel.Text = "模拟器实例"
-$vmLabel.Location = New-Object System.Drawing.Point -ArgumentList 24, 222
+$vmLabel.Location = New-Object System.Drawing.Point -ArgumentList 24, 126
 $vmLabel.Size = New-Object System.Drawing.Size -ArgumentList 110, 24
 $settingsPanel.Controls.Add($vmLabel)
 
@@ -375,26 +381,26 @@ $vmText.Value = $VmIndex
 $vmText.Minimum = 0
 $vmText.Maximum = 9
 $vmText.Enabled = $false
-$vmText.Location = New-Object System.Drawing.Point -ArgumentList 136, 220
+$vmText.Location = New-Object System.Drawing.Point -ArgumentList 136, 124
 $vmText.Size = New-Object System.Drawing.Size -ArgumentList 120, 24
 $settingsPanel.Controls.Add($vmText)
 
 $packageLabel = New-Object System.Windows.Forms.Label
 $packageLabel.Text = "游戏包名"
-$packageLabel.Location = New-Object System.Drawing.Point -ArgumentList 24, 266
+$packageLabel.Location = New-Object System.Drawing.Point -ArgumentList 24, 170
 $packageLabel.Size = New-Object System.Drawing.Size -ArgumentList 110, 24
 $settingsPanel.Controls.Add($packageLabel)
 
 $packageText = New-Object System.Windows.Forms.TextBox
 $packageText.Text = $Package
 $packageText.ReadOnly = $true
-$packageText.Location = New-Object System.Drawing.Point -ArgumentList 136, 264
+$packageText.Location = New-Object System.Drawing.Point -ArgumentList 136, 168
 $packageText.Size = New-Object System.Drawing.Size -ArgumentList 230, 24
 $packageText.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
 $settingsPanel.Controls.Add($packageText)
 
 $progressBar = New-Object System.Windows.Forms.ProgressBar
-$progressBar.Location = New-Object System.Drawing.Point -ArgumentList 24, 338
+$progressBar.Location = New-Object System.Drawing.Point -ArgumentList 24, 240
 $progressBar.Size = New-Object System.Drawing.Size -ArgumentList 360, 12
 $progressBar.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
 $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Blocks
@@ -403,19 +409,20 @@ $settingsPanel.Controls.Add($progressBar)
 $statusLabel = New-Object System.Windows.Forms.Label
 $statusLabel.Text = "Ready"
 $statusLabel.ForeColor = $mutedText
-$statusLabel.Location = New-Object System.Drawing.Point -ArgumentList 24, 362
+$statusLabel.Location = New-Object System.Drawing.Point -ArgumentList 24, 262
 $statusLabel.Size = New-Object System.Drawing.Size -ArgumentList 360, 26
 $settingsPanel.Controls.Add($statusLabel)
 
 $tipGroup = New-Object System.Windows.Forms.GroupBox
 $tipGroup.Text = "Tips"
-$tipGroup.Location = New-Object System.Drawing.Point -ArgumentList 24, 432
+$tipGroup.Location = New-Object System.Drawing.Point -ArgumentList 24, 310
 $tipGroup.Size = New-Object System.Drawing.Size -ArgumentList 360, 130
 $tipGroup.Anchor = [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
-$settingsPanel.Controls.Add($tipGroup)
+# Removed middle-column Tips block per request.
+# $settingsPanel.Controls.Add($tipGroup)
 
 $tipLabel = New-Object System.Windows.Forms.Label
-$tipLabel.Text = "The helper uses MuMu enhanced screenshots and internal vision detection. It opens Duel Channel from home, joins the event page, and stops at event selection."
+$tipLabel.Text = "The helper uses MuMu enhanced screenshots and internal vision detection. It opens Duel Channel from home, joins casual events, records duel results, and continues by loop count."
 $tipLabel.Location = New-Object System.Drawing.Point -ArgumentList 18, 32
 $tipLabel.Size = New-Object System.Drawing.Size -ArgumentList 320, 80
 $tipGroup.Controls.Add($tipLabel)
@@ -444,7 +451,7 @@ function Show-JoinDuelSettings {
     $autoLoginCheckBox.Visible = $false
     $duelLoopLabel.Visible = $true
     $duelLoopUpDown.Visible = $true
-    $duelLoopHint.Visible = $true
+    $duelLoopHint.Visible = $false
     $pathLabel.Visible = $false
     $pathText.Visible = $false
     $vmLabel.Visible = $false
