@@ -7,3 +7,4 @@ data/*.jsonl
 duel_match_dataset.jsonl
 config/settings.json
 **/AGENTS.md
+Launcher.UI.modern.v2.ps1

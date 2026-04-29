@@ -672,6 +672,18 @@ function Invoke-DuelFinalGiftDetect {
     }
 }
 
+function Test-DuelFinalGiftEvidence {
+    param([object]$FinalGift)
+
+    if (-not $FinalGift -or -not ($FinalGift.PSObject.Properties.Name -contains "score")) {
+        return $false
+    }
+    $text = [string]$FinalGift.score
+    $finalGiftLabel = -join @([char]0x6700, [char]0x7EC8, [char]0x793C, [char]0x7269, [char]0x70B9, [char]0x6570)
+    $giftPointLabel = -join @([char]0x793C, [char]0x7269, [char]0x70B9, [char]0x6570)
+    return ($text.Contains($finalGiftLabel) -or $text.Contains($giftPointLabel))
+}
+
 function Invoke-DuelSupportButtonDetect {
     param(
         [string]$Path,
@@ -829,6 +841,59 @@ function Add-DuelMatchRecord {
     Add-Log ("Duel match appended with winner_side: {0}." -f $WinnerSide)
 }
 
+function Get-DuelMatchRecognitionQuality {
+    param([object]$MatchResult)
+
+    $quality = [pscustomobject]@{
+        IsUsable = $false
+        IsComplete = $false
+        EnemyCount = 0
+        MissingCount = 0
+        MissingName = 0
+        LeftCount = 0
+        RightCount = 0
+        Score = -1000
+    }
+
+    if (-not $MatchResult -or -not ($MatchResult.PSObject.Properties.Name -contains "record") -or -not $MatchResult.record) {
+        return $quality
+    }
+
+    $record = $MatchResult.record
+    $leftEnemies = @()
+    $rightEnemies = @()
+    if ($record.PSObject.Properties.Name -contains "left_enemies" -and $record.left_enemies) {
+        $leftEnemies = @($record.left_enemies)
+    }
+    if ($record.PSObject.Properties.Name -contains "right_enemies" -and $record.right_enemies) {
+        $rightEnemies = @($record.right_enemies)
+    }
+
+    $quality.LeftCount = $leftEnemies.Count
+    $quality.RightCount = $rightEnemies.Count
+    $quality.EnemyCount = $quality.LeftCount + $quality.RightCount
+    foreach ($enemy in @($leftEnemies + $rightEnemies)) {
+        $name = ""
+        if ($enemy.PSObject.Properties.Name -contains "name" -and $null -ne $enemy.name) {
+            $name = ([string]$enemy.name).Trim()
+        }
+        if (-not $name) {
+            $quality.MissingName++
+        }
+        if (-not ($enemy.PSObject.Properties.Name -contains "count") -or $null -eq $enemy.count) {
+            $quality.MissingCount++
+        }
+    }
+
+    $quality.IsUsable = ($quality.EnemyCount -gt 0)
+    $quality.IsComplete = ($quality.LeftCount -gt 0 -and $quality.RightCount -gt 0 -and $quality.MissingName -eq 0 -and $quality.MissingCount -eq 0)
+    $quality.Score = ($quality.EnemyCount * 10) - ($quality.MissingCount * 4) - ($quality.MissingName * 6)
+    if ($quality.LeftCount -eq 0 -or $quality.RightCount -eq 0) {
+        $quality.Score -= 20
+    }
+    return $quality
+}
+
 function New-FallbackDuelMatchResult {
     param([Nullable[int]]$RemainingGifts)
 
@@ -863,6 +928,7 @@ function Wait-DuelResult {
 
     Add-Log "Waiting for duel result by watching remaining gifts; battle may take 30-60 seconds."
     $finalGifts = $null
+    $sawFinalSettlement = $false
     $deadline = (Get-Date).AddMinutes(6)
     while ((Get-Date) -lt $deadline) {
         Test-StopRequested
@@ -874,13 +940,15 @@ function Wait-DuelResult {
         if ($vision.PSObject.Properties.Name -contains "confidence") {
             $visionConfidence = [double]$vision.confidence
         }
-        if ([string]$vision.state -eq "duel_result" -and $visionConfidence -ge 0.95) {
-            Add-Log "Final settlement page detected while waiting for gift change."
+        $visionState = [string]$vision.state
+        if ($visionState -eq "duel_result" -and $visionConfidence -ge 0.95) {
+            Add-Log ("Final settlement page detected while waiting for gift change (confidence {0:N2}, method {1})." -f $visionConfidence, $vision.method)
             $finalGift = Invoke-DuelFinalGiftDetect -Path $path
             if ($finalGift -and $finalGift.PSObject.Properties.Name -contains "remaining_gifts" -and $null -ne $finalGift.remaining_gifts) {
                 $finalGifts = [int]$finalGift.remaining_gifts
                 Add-Log ("Final settlement gifts detected: {0}." -f $finalGifts)
             }
+            $sawFinalSettlement = $true
             break
         }
 
@@ -891,6 +959,16 @@ function Wait-DuelResult {
             Add-Log ("Remaining gifts detected: {0}." -f $current)
             if ($null -ne $InitialGifts -and $current -ne $InitialGifts) {
                 Add-Log ("Duel settlement detected: gifts changed from {0} to {1}." -f $InitialGifts, $current)
+                break
+            }
+        }
+
+        if ($visionState -eq "duel_result" -or $visionState -eq "duel_game" -or $visionState -eq "start" -or $visionState -eq "unknown") {
+            $finalGift = Invoke-DuelFinalGiftDetect -Path $path
+            if ((Test-DuelFinalGiftEvidence -FinalGift $finalGift) -and $finalGift.PSObject.Properties.Name -contains "remaining_gifts" -and $null -ne $finalGift.remaining_gifts) {
+                $finalGifts = [int]$finalGift.remaining_gifts
+                Add-Log ("Final settlement confirmed by OCR while waiting for gift change: {0} gifts." -f $finalGifts)
+                $sawFinalSettlement = $true
                 break
             }
         }
@@ -908,6 +986,13 @@ function Wait-DuelResult {
     }
 
     Add-DuelMatchRecord -MatchResult $MatchResult -WinnerSide $winnerSide
+    if ($sawFinalSettlement) {
+        Return-DuelHomeAfterResult
+    }
+    return [pscustomobject]@{
+        SawFinalSettlement = $sawFinalSettlement
+        WinnerSide = $winnerSide
+    }
 }
 
 function Return-DuelHomeAfterResult {
@@ -930,9 +1015,14 @@ function Return-DuelHomeAfterResult {
                 $confidence = [double]$vision.confidence
             }
             if ($confidence -lt 0.95) {
-                Add-Log "Low-confidence result return page ignored."
-                Wait-TaskInterval -Seconds 2
-                continue
+                $finalGift = Invoke-DuelFinalGiftDetect -Path $path
+                if (Test-DuelFinalGiftEvidence -FinalGift $finalGift) {
+                    Add-Log ("Low-confidence result return page confirmed by final gift OCR (confidence {0:N2})." -f $confidence)
+                } else {
+                    Add-Log "Low-confidence result return page ignored."
+                    Wait-TaskInterval -Seconds 2
+                    continue
+                }
             }
             $x = [int]$vision.x
             $y = [int]$vision.y
@@ -998,7 +1088,7 @@ function Random-SupportDuelSide {
             break
         }
     }
-    Wait-DuelResult -MatchResult $MatchResult -SupportSide $side -InitialGifts $initialGifts
+    return (Wait-DuelResult -MatchResult $MatchResult -SupportSide $side -InitialGifts $initialGifts)
 }
 
 function Collect-DuelMatchInfo {
@@ -1014,26 +1104,50 @@ function Collect-DuelMatchInfo {
 
     $oldScreenFile = $screenFile
     $captureIndex = 0
+    $bestResult = $null
+    $bestQuality = $null
+    $maxAttemptsPerPoint = 3
     foreach ($point in $detailPoints) {
         Test-StopRequested
         Add-Log ("Opening {0}." -f $point.Name)
         Tap-Screen -X $point.X -Y $point.Y -Reason "duel enemy detail"
         Wait-TaskInterval -Seconds 0.50
 
-        $captureIndex++
-        $datasetScreen = Join-Path $screenshotDir ("arknights-duel-dataset-{0}-{1}.png" -f (Get-Date -Format "yyyyMMdd-HHmmss"), $captureIndex)
-        try {
-            $script:screenFile = $datasetScreen
-            $path = Capture-Screen
-            $savedResult = Save-DuelMatchDataset -Path $path
-            if ($null -ne $savedResult) {
-                Add-Log "Duel matchup captured; stopping further recognition for this task."
-                Random-SupportDuelSide -MatchResult $savedResult
-                return
+        for ($attempt = 1; $attempt -le $maxAttemptsPerPoint; $attempt++) {
+            Test-StopRequested
+            if ($attempt -gt 1) {
+                Add-Log ("Retrying duel matchup OCR for {0}, attempt {1}/{2}." -f $point.Name, $attempt, $maxAttemptsPerPoint)
+                Wait-TaskInterval -Seconds 0.60
             }
-        } finally {
-            $script:screenFile = $oldScreenFile
+
+            $captureIndex++
+            $datasetScreen = Join-Path $screenshotDir ("arknights-duel-dataset-{0}-{1}.png" -f (Get-Date -Format "yyyyMMdd-HHmmss"), $captureIndex)
+            try {
+                $script:screenFile = $datasetScreen
+                $path = Capture-Screen
+                $savedResult = Save-DuelMatchDataset -Path $path
+                if ($null -ne $savedResult) {
+                    $quality = Get-DuelMatchRecognitionQuality -MatchResult $savedResult
+                    Add-Log ("Duel OCR quality: enemies {0}, missing count {1}, missing name {2}, sides L{3}/R{4}." -f $quality.EnemyCount, $quality.MissingCount, $quality.MissingName, $quality.LeftCount, $quality.RightCount)
+                    if ($null -eq $bestQuality -or $quality.Score -gt $bestQuality.Score) {
+                        $bestResult = $savedResult
+                        $bestQuality = $quality
+                    }
+                    if ($quality.IsComplete) {
+                        Add-Log "Duel matchup captured with complete enemy counts."
+                        return (Random-SupportDuelSide -MatchResult $savedResult)
+                    }
+                    Add-Log "Duel matchup OCR incomplete; trying another capture before accepting it."
+                }
+            } finally {
+                $script:screenFile = $oldScreenFile
+            }
         }
+    }
+
+    if ($bestResult -and $bestQuality -and $bestQuality.IsUsable) {
+        Add-Log ("Using best incomplete duel matchup after retries: enemies {0}, missing count {1}, missing name {2}, sides L{3}/R{4}." -f $bestQuality.EnemyCount, $bestQuality.MissingCount, $bestQuality.MissingName, $bestQuality.LeftCount, $bestQuality.RightCount)
+        return (Random-SupportDuelSide -MatchResult $bestResult)
     }
 
     Add-Log "No valid duel matchup detail was captured."
@@ -1044,7 +1158,7 @@ function Collect-DuelMatchInfo {
         $remainingGifts = [int]$gift.remaining_gifts
     }
     Add-Log "Proceeding with random support using fallback matchup record."
-    Random-SupportDuelSide -MatchResult (New-FallbackDuelMatchResult -RemainingGifts $remainingGifts)
+    return (Random-SupportDuelSide -MatchResult (New-FallbackDuelMatchResult -RemainingGifts $remainingGifts))
 }
 
 function Test-LoadingScreen {
@@ -1378,26 +1492,39 @@ function Auto-JoinDuelEvent {
 
         if ($state -eq "duel_game") {
             Add-Log "Duel game screen detected."
-            Collect-DuelMatchInfo
+            $roundResult = Collect-DuelMatchInfo
             $completedRounds++
             Add-Log ("Duel matchup and result recorded; completed round {0}." -f $completedRounds)
             if ($LoopLimit -gt 0 -and $completedRounds -ge $LoopLimit) {
                 Add-Log ("Loop limit reached: {0} round(s)." -f $LoopLimit)
                 return
             }
-            Add-Log "Waiting for next duel round or final settlement page."
+            $roundSummary = @($roundResult | Where-Object { $_ -and $_.PSObject.Properties.Name -contains "SawFinalSettlement" } | Select-Object -Last 1)
+            if ($roundSummary.Count -gt 0 -and [bool]$roundSummary[0].SawFinalSettlement) {
+                $duelChannelTapped = $false
+                $joinEventTapped = $false
+                $casualTapped = $false
+                Add-Log "Final settlement handled for this round; resuming duel navigation."
+            } else {
+                Add-Log "Waiting for next duel round or final settlement page."
+            }
             $startGameTapped = $false
             Wait-TaskInterval -Seconds 2
             continue
         } elseif ($state -eq "duel_result" -and $confidence -ge 0.95) {
-            Add-Log "Duel result page detected in navigation loop."
+            Add-Log "Final settlement page still visible after result handling; returning home."
             Return-DuelHomeAfterResult
             $duelChannelTapped = $false
             $joinEventTapped = $false
             $casualTapped = $false
             $startGameTapped = $false
         } elseif ($state -eq "duel_result") {
-            Add-Log "Low-confidence duel result ignored."
+            Add-Log "Low-confidence final settlement page still visible; checking OCR before returning."
+            Return-DuelHomeAfterResult
+            $duelChannelTapped = $false
+            $joinEventTapped = $false
+            $casualTapped = $false
+            $startGameTapped = $false
         } elseif ($state -eq "duel_casual_selected" -and $vision.PSObject.Properties.Name -contains "x" -and $vision.PSObject.Properties.Name -contains "y") {
             if ($startGameTapped) {
                 Add-Log "Start Game already clicked; waiting for duel game screen."

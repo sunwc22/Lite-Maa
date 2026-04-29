@@ -462,14 +462,21 @@ def detect_duel_result(img):
     game_board = color_ratios(region(img, 0.16, 0.12, 0.84, 0.78)[0])
     game_support = color_ratios(region(img, 0.00, 0.78, 1.00, 1.00)[0])
 
+    looks_like_result_header = title["white"] > 0.18 and title["dark"] > 0.10
+    looks_like_result_home = home_button["yellow"] > 0.34 and home_button["dark"] > 0.08
     looks_like_event_select = event_header["yellow"] > 0.10 and top_left_button["white"] > 0.12
-    looks_like_game = game_board["mid"] > 0.34 and game_board["bright"] > 0.05 and game_support["dark"] > 0.10
+    looks_like_game = (
+        game_board["mid"] > 0.34
+        and game_board["bright"] > 0.05
+        and game_support["dark"] > 0.10
+        and not (looks_like_result_header and looks_like_result_home)
+    )
     if looks_like_event_select or looks_like_game:
         return None
 
     score = 0
     score += 1 if title["white"] > 0.18 and title["dark"] > 0.10 else 0
-    score += 1 if ranking["dark"] > 0.34 and ranking["white"] > 0.07 and ranking["yellow"] < 0.05 else 0
+    score += 1 if ranking["dark"] > 0.34 and ranking["white"] > 0.04 and ranking["yellow"] < 0.05 else 0
     score += 1 if bottom_bar["dark"] > 0.22 and bottom_bar["yellow"] > 0.06 else 0
     score += 1 if home_button["yellow"] > 0.34 and home_button["dark"] > 0.08 else 0
 
@@ -604,6 +611,11 @@ def main():
 
     img = np.asarray(Image.open(sys.argv[1]).convert("RGB"))
 
+    duel_result = detect_duel_result(img)
+    if duel_result:
+        emit(duel_result)
+        return 0
+
     duel_game = detect_duel_game(img)
     if duel_game:
         emit(duel_game)
@@ -622,11 +634,6 @@ def main():
     duel_channel = detect_duel_channel(img)
     if duel_channel:
         emit(duel_channel)
-        return 0
-
-    duel_result = detect_duel_result(img)
-    if duel_result:
-        emit(duel_result)
         return 0
 
     announcement = detect_announcement(img)

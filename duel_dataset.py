@@ -475,7 +475,7 @@ def extract_gift_value(image_path):
 def extract_final_gift_value(image_path):
     ok, error, engine = configure_ocr()
     img = Image.open(image_path).convert("RGB")
-    final_text = ocr_region(img, (0.12, 0.60, 0.34, 0.78), invert=False) if ok else ""
+    final_text = ocr_region(img, (0.12, 0.64, 0.34, 0.82), invert=False) if ok else ""
     return {
         "ok": ok,
         "ocr_error": error,
