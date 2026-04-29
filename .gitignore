@@ -1,0 +1,9 @@
+dist/
+runtime/
+screenshots/
+__pycache__/
+*.pyc
+data/*.jsonl
+duel_match_dataset.jsonl
+config/settings.json
+**/AGENTS.md
