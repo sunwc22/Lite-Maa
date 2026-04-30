@@ -1,5 +1,5 @@
 param(
-    [string]$OutputDir = (Join-Path $PSScriptRoot "dist\MaaLite"),
+    [string]$OutputDir = (Join-Path $PSScriptRoot "dist\DuelTracker"),
     [switch]$IncludeRuntime,
     [switch]$BuildExe,
     [string]$RuntimeSource = "D:\Applications\PaddleOCR\.venv",
@@ -41,10 +41,10 @@ foreach ($dir in @($packageRoot, $runtimeRoot, $dataRoot, $configRoot, $screensh
 }
 
 $projectFiles = @(
-    "Arknights-MuMu-Launcher.ps1",
+    "DuelTracker.ps1",
     "Launcher.UI.ps1",
     "Launcher.UI.modern.v2.ps1",
-    "Arknights-MuMu-Launcher.vbs",
+    "DuelTracker.vbs",
     "vision_detect.py",
     "duel_dataset.py",
     "mumu_capture.py",
@@ -93,8 +93,8 @@ if ($IncludeRuntime) {
 }
 
 if ($BuildExe) {
-    $inputScript = Join-Path $packageRoot "Arknights-MuMu-Launcher.ps1"
-    $outputExe = Join-Path $packageRoot "MaaLite.exe"
+    $inputScript = Join-Path $packageRoot "DuelTracker.ps1"
+    $outputExe = Join-Path $packageRoot "DuelTracker.exe"
     $invokePs2Exe = Get-Command Invoke-ps2exe -ErrorAction SilentlyContinue
     $ps2exe = Get-Command ps2exe -ErrorAction SilentlyContinue
 
@@ -110,11 +110,11 @@ if ($BuildExe) {
 }
 
 $readme = @"
-Maa Lite portable package
+DuelTracker portable package
 
 Run:
-  1. Prefer double-clicking Arknights-MuMu-Launcher.vbs.
-  2. If MaaLite.exe exists, you can run MaaLite.exe instead.
+  1. Prefer double-clicking DuelTracker.vbs.
+  2. If DuelTracker.exe exists, you can run DuelTracker.exe instead.
 
 Portable OCR:
   - If this package was built with -IncludeRuntime, OCR uses:

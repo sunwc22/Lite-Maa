@@ -409,6 +409,10 @@ h1 {
   .section {
     padding: 64px 0;
   }
+
+  .workflow-section {
+    padding-top: 92px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -40,7 +40,7 @@ function Set-CardStyle {
 
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "Arknights MuMu Automation"
+$form.Text = "DuelTracker"
 $form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
 $form.Size = New-Object System.Drawing.Size -ArgumentList 1200, 720
 $form.MinimumSize = New-Object System.Drawing.Size -ArgumentList 1060, 620
@@ -126,7 +126,7 @@ $brandLabel.Size = New-Object System.Drawing.Size -ArgumentList 260, 38
 # $heroPanel.Controls.Add($brandLabel)
 
 $heroTitle = New-Object System.Windows.Forms.Label
-$heroTitle.Text = "Arknights MuMu Automation"
+$heroTitle.Text = "DuelTracker"
 $heroTitle.Font = New-Object System.Drawing.Font -ArgumentList "Microsoft YaHei UI", 22, ([System.Drawing.FontStyle]::Bold)
 $heroTitle.ForeColor = [System.Drawing.Color]::White
 $heroTitle.BackColor = [System.Drawing.Color]::Transparent

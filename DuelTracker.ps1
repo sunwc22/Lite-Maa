@@ -1037,7 +1037,7 @@ function Return-DuelHomeAfterResult {
             continue
         }
 
-        if ($state -eq "start" -or $state -eq "unknown") {
+        if ($state -eq "start" -or $state -eq "unknown" -or $state -eq "home") {
             $finalGift = Invoke-DuelFinalGiftDetect -Path $path
             if (Test-DuelFinalGiftEvidence -FinalGift $finalGift) {
                 $size = Get-DeviceSize
@@ -1558,12 +1558,22 @@ function Auto-JoinDuelEvent {
                 $joinEventTapped = $true
             }
         } elseif ($state -eq "home") {
-            if ($duelChannelTapped) {
-                Add-Log "Duel Channel already clicked; waiting for channel page."
+            $finalGift = Invoke-DuelFinalGiftDetect -Path $path
+            if (Test-DuelFinalGiftEvidence -FinalGift $finalGift) {
+                Add-Log "Final settlement page misdetected as home; returning home."
+                Return-DuelHomeAfterResult
+                $duelChannelTapped = $false
+                $joinEventTapped = $false
+                $casualTapped = $false
+                $startGameTapped = $false
             } else {
-                Add-Log ("Home detected; tapping Duel Channel at {0},{1}." -f $duelX, $duelY)
-                Tap-Screen -X $duelX -Y $duelY -Reason "Duel Channel"
-                $duelChannelTapped = $true
+                if ($duelChannelTapped) {
+                    Add-Log "Duel Channel already clicked; waiting for channel page."
+                } else {
+                    Add-Log ("Home detected; tapping Duel Channel at {0},{1}." -f $duelX, $duelY)
+                    Tap-Screen -X $duelX -Y $duelY -Reason "Duel Channel"
+                    $duelChannelTapped = $true
+                }
             }
         } elseif ($state -eq "loading") {
             Add-Log "Loading screen detected; waiting."
